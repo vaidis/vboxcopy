@@ -10,3 +10,16 @@ vboxcopy is a simple backup script used with cron to backup virtualbox vm machin
 0 1 * * * /opt/vboxcopy.sh --vm='Centos 7 admin' --host=10.0.0.1 --dir='/vmachines' --user=root
 ```
 
+## how it works
+the main function describes the workflow if this script  
+```
+  if close_vm; then
+    if mount_ssh; then
+      if check_space; then
+        copy_vm
+        umount_ssh
+        start_vm
+      fi
+    fi
+  fi
+```
