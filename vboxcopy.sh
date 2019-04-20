@@ -10,9 +10,8 @@ function log() {
 
 function usage () {
     echo
-    echo -e "./vmove.sh \e[94mhelp\e[39m"
-    echo -e "./vmove.sh \e[94mcheck\e[39m"
-    echo -e "./vmove.sh --vm=\e[96m'IT development sql' \e[39m--dest=\e[91m10.20.30.40\e[39m --user=root"
+    echo -e "./vmove.sh \e[93m--help \e[39m "
+    echo -e "./vmove.sh --vm=\e[96m'IT development sql' \e[39m--dest=\e[91m10.20.30.40\e[39m --user=\e[91mroot\e[39m"
     echo
     exit
 }
