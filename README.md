@@ -11,7 +11,7 @@ vboxcopy is a simple backup script used with cron to backup virtualbox vm machin
 ```
 
 ## how it works
-the main function describes the workflow if this script  
+The main function describes the workflow of this script  
 ```
   if close_vm; then
     if mount_ssh; then
