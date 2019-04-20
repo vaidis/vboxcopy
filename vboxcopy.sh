@@ -21,11 +21,11 @@ function close_vm () {
   if vboxmanage showvminfo "$VM" > /dev/null; then
     if vboxmanage list runningvms | grep "$VM" > /dev/null; then
       if vboxmanage controlvm "$VM" poweroff soft -q 2> /dev/null; then
-      	log "[ OK ] power off vm"
+        log "[ OK ] power off vm"
         return 0
       fi
     else
-			log "[ OK ] vm is already powered off"
+      log "[ OK ] vm is already powered off"
       return 0
     fi
   else
@@ -39,7 +39,7 @@ function mount_ssh() {
   if ssh -q  -o BatchMode=yes -o ConnectTimeout=10 $USER@$HOST exit; then
     if ssh $USER@$HOST ls "$DIR" > /dev/null; then
       if sshfs -o rw $USER@$HOST:"$DIR" /mnt/vmove; then
-      	log "[ OK ] sshfs mount"
+        log "[ OK ] sshfs mount"
         return 0
       else
         log "[FAIL] mount $USER@$HOST to /mnt/vmove"
@@ -65,10 +65,10 @@ function check_space () {
   log "remote available size: $dst_size"
 
   if [ "$dst_size" -gt "$src_size" ]; then
-  	log "[ OK ] enought available space"
+    log "[ OK ] enought available space"
     return 0
   else
-  	log "[FAIL] not enought available space"
+    log "[FAIL] not enought available space"
     return 1
   fi
 }
@@ -83,30 +83,30 @@ function copy_vm () {
             "$vm_dir" /mnt/vmove >> $LOG
 
   if [ $? -eq 0 ]; then
-  	log "[ OK ] copy vm"
+    log "[ OK ] copy vm"
     return 0
   else
-  	log "[FAIL] copy vm"
+    log "[FAIL] copy vm"
     return 1
   fi
 }
 
 function umount_ssh () {
   if umount /mnt/vmove; then
-  	log "[ OK ] sshfs umount"
+    log "[ OK ] sshfs umount"
     return 0
   else
-  	log "[FAIL] sshfs umount"
+    log "[FAIL] sshfs umount"
     return 1
   fi
 }
 
 function start_vm () {
   if vboxmanage startvm "$VM" --type headless > /dev/null; then
-  	log "[ OK ] start vm"
+    log "[ OK ] start vm"
     return 0
   else
-  	log "[FAIL] start vm"
+    log "[FAIL] start vm"
     return 1
   fi
 }
@@ -123,9 +123,9 @@ function main () {
   if close_vm; then
     if mount_ssh; then
       if check_space; then
-				copy_vm
-				umount_ssh
-				start_vm
+        copy_vm
+        umount_ssh
+        start_vm
       fi
     fi
   fi
