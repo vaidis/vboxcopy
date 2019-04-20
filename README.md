@@ -1,6 +1,6 @@
 # VBoxCopy
-vboxcopy is a simple backup script used with cron to backup virtualbox vm machines 
-vboxcopy send vm's to host that has already the ssh keys from the source host 
+vboxcopy is a simple backup script used with cron to backup virtualbox vm machines  
+vboxcopy send vm's to host that has already the ssh keys from the source host  
 
 ## crontab settings
 ```
