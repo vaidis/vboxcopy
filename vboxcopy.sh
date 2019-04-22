@@ -2,6 +2,8 @@
 
 IFS="\n"
 LOG="vboxcopy.log"
+PID=$$
+MNTDIR="/mnt/vboxcopy_${PID}"
 
 function log() {
     echo -e "`date +'%d/%m/%Y %H:%M:%S'` | $1"
@@ -10,8 +12,8 @@ function log() {
 
 function usage () {
     echo
-    echo -e "./vmove.sh \e[93m--help \e[39m "
-    echo -e "./vmove.sh --vm=\e[96m'IT development sql' \e[39m--dest=\e[91m10.20.30.40\e[39m --user=\e[91mroot\e[39m"
+    echo -e "./vboxcopy.sh \e[93m--help \e[39m "
+    echo -e "./vboxcopy.sh --vm=\e[96m'IT development sql'\e[39m --dest=\e[91m10.20.30.40\e[39m --user=\e[91mroot\e[39m"
     echo
     exit
 }
@@ -34,14 +36,14 @@ function close_vm () {
 }
 
 function mount_ssh() {
-  [ -d /mnt/vmove ] || mkdir /mnt/vmove
-  if ssh -q  -o BatchMode=yes -o ConnectTimeout=10 $USER@$HOST exit; then
-    if ssh $USER@$HOST ls "$DIR" > /dev/null; then
-      if sshfs -o rw $USER@$HOST:"$DIR" /mnt/vmove; then
+  [ -d "$MNTDIR" ] || mkdir "$MNTDIR"
+  if ssh -q  -o BatchMode=yes -o ConnectTimeout=10 $SSHUSER@$HOST exit; then
+    if ssh $SSHUSER@$HOST ls "$DIR" > /dev/null; then
+      if sshfs -o rw $SSHUSER@$HOST:"$DIR" "$MNTDIR"; then
         log "[ OK ] sshfs mount"
         return 0
       else
-        log "[FAIL] mount $USER@$HOST to /mnt/vmove"
+        log "[FAIL] mount $USER@$HOST to $MNTDIR"
         return 1
       fi
     else
@@ -58,7 +60,7 @@ function check_space () {
   vm_log=$(vboxmanage showvminfo "$VM" | grep "Log folder" | awk -F: '{print $2}' | sed 's/^[ ]*//g')
   vm_dir=$(dirname "$vm_log")
   src_size=$(du -s "$vm_dir" | awk '{print $1}')
-  dst_size=$(ssh root@10.0.31.221 df "$DIR" | grep -v Filesystem | awk '{print $4}')
+  dst_size=$(ssh $SSHUSER@$HOST df "$DIR" | grep -v Filesystem | awk '{print $4}')
 
   log "source vm size: $src_size"
   log "remote available size: $dst_size"
@@ -79,7 +81,7 @@ function copy_vm () {
             --human-readable \
             --no-owner \
             --no-group \
-            "$vm_dir" /mnt/vmove >> $LOG
+            "$vm_dir" "$MNTDIR" >> $LOG
 
   if [ $? -eq 0 ]; then
     log "[ OK ] copy vm"
@@ -90,10 +92,35 @@ function copy_vm () {
   fi
 }
 
+function check_copy () {
+    vm_log=$(vboxmanage showvminfo "$VM" | grep "Log folder" | awk -F: '{print $2}' | sed 's/^[ ]*//g')
+    vm_name=$(vboxmanage showvminfo "$VM" | grep "Name:" | awk -F: '{print $2}' | sed 's/^[ ]*//g')
+    vm_dir=$(dirname "$vm_log")
+
+    cd "$vm_dir"
+    find . -type f -exec md5sum {} + | sort -k 2 > "/tmp/src_vm"
+    cd "$MNTDIR/${vm_name}"
+    find . -type f -exec md5sum {} + | sort -k 2 > "/tmp/dst_vm"
+    cd ~
+
+    if diff -u "/tmp/src_vm" "/tmp/dst_vm"; then
+      log "[ OK ] destination checksum"
+      return 0
+    else
+      log "[FAIL] destination checksum"
+      return 1
+    fi
+}
+
 function umount_ssh () {
-  if umount /mnt/vmove; then
-    log "[ OK ] sshfs umount"
-    return 0
+  if umount "$MNTDIR"; then
+    if rmdir "$MNTDIR"; then
+      log "[ OK ] sshfs umount"
+      return 0
+    else
+      log "[FAIL] to remove mount dir. Not empty"
+      return 1
+    fi
   else
     log "[FAIL] sshfs umount"
     return 1
@@ -116,20 +143,20 @@ function main () {
   log "VM   : $VM"
   log "HOST : $HOST"
   log "DIR  : $DIR"
-  log "USER : $USER"
+  log "USER : $SSHUSER"
   log ""
 
   if close_vm; then
     if mount_ssh; then
       if check_space; then
         copy_vm
+        check_copy
         umount_ssh
         start_vm
       fi
     fi
   fi
 }
-
 
 while [ "$1" != "" ]; do
   PARAM=`echo "$1" | awk -F= '{print $1}'`
@@ -150,7 +177,7 @@ while [ "$1" != "" ]; do
       DIR=$VALUE
       ;;
     --user)
-      USER=$VALUE
+      SSHUSER=$VALUE
       ;;
     *)
       usage
@@ -159,5 +186,10 @@ while [ "$1" != "" ]; do
   esac
   shift
 done
+
+[ -z "$VM" ] && echo -e "missing \e[91m'--vm'\e[39m option"
+[ -z "$HOST" ] && echo -e "missing \e[91m'--host'\e[39m option"
+[ -z "$DIR" ] && echo -e "missing \e[91m'--dir'\e[39m option"
+[ -z "$SSHUSER" ] && echo -e "missing \e[91m'--user'\e[39m option"
 
 main
