@@ -178,6 +178,18 @@ function main () {
   fi
 }
 
+
+commands=(rsync find rmdir du date umount ssh sshfs vboxmanage)
+for command in "${commands[@]}"
+do
+    if ! command -v ${command} > /dev/null; then
+        echo -e "Command \e[96m$command\e[39m not found"
+
+        exit
+    fi
+done
+
+
 while [ "$1" != "" ]; do
   PARAM=`echo "$1" | awk -F= '{print $1}'`
   VALUE=`echo "$1" | awk -F= '{print $2}'`
@@ -210,6 +222,7 @@ while [ "$1" != "" ]; do
   esac
   shift
 done
+
 
 [ -z "$VM" ] && usage "missing \e[91m'--vm'\e[39m option"
 [ -z "$HOST" ] && usage "missing \e[91m'--host'\e[39m option"
