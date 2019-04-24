@@ -1,6 +1,8 @@
 #!/bin/bash
 
-IFS="\n"
+#IFS=""
+IFS="
+"
 LOG="vboxcopy.log"
 PID=$$
 MNTDIR="/mnt/vboxcopy_${PID}"
@@ -10,13 +12,29 @@ function log() {
     echo -e "`date +'%d/%m/%Y %H:%M:%S'` | $1" >> $LOG
   }
 
-function usage () {
-    echo
+function usage() {
+    echo -e "\n $1\n"
     echo -e "./vboxcopy.sh \e[93m--help \e[39m "
+    echo -e "./vboxcopy.sh \e[93m--list \e[39m "
     echo -e "./vboxcopy.sh --vm=\e[96m'IT development sql'\e[39m --dest=\e[91m10.20.30.40\e[39m --user=\e[91mroot\e[39m"
     echo
     exit
 }
+
+function list () {
+    total=0
+    for vm in $(vboxmanage list vms); do
+         vm_name="$(echo $vm | awk -F\{ '{print $1}' | sed 's/[[:space:]]*$//' | sed 's/\"//g' )"
+         vm_log=$(vboxmanage showvminfo "$vm_name" | grep "Log folder" | awk -F: '{print $2}' | sed 's/^[ ]*//g')
+         vm_dir=$(dirname "$vm_log")
+         vm_size_h=$(du -sh "$vm_dir" | awk '{print $1}')
+         vm_size_b=$(du -s "$vm_dir" | awk '{print $1}')
+         echo -e "\e[96m $vm_size_h \e[39m " "$vm_name"
+         total=$((total+vm_size_b))
+    done
+    echo -e "\e[96m $((total / 1024 / 1024))G\e[39m \e[101m TOTAL \e[49m"
+}
+
 
 function close_vm () {
   if vboxmanage showvminfo "$VM" > /dev/null; then
@@ -167,6 +185,10 @@ while [ "$1" != "" ]; do
       usage
       exit 1
       ;;
+    --list)
+      list
+      exit 1
+      ;;
     --vm)
       VM=$VALUE
       ;;
@@ -187,9 +209,14 @@ while [ "$1" != "" ]; do
   shift
 done
 
-[ -z "$VM" ] && echo -e "missing \e[91m'--vm'\e[39m option"
-[ -z "$HOST" ] && echo -e "missing \e[91m'--host'\e[39m option"
-[ -z "$DIR" ] && echo -e "missing \e[91m'--dir'\e[39m option"
-[ -z "$SSHUSER" ] && echo -e "missing \e[91m'--user'\e[39m option"
+[ -z "$VM" ] && usage "missing \e[91m'--vm'\e[39m option"
+[ -z "$HOST" ] && usage "missing \e[91m'--host'\e[39m option"
+[ -z "$DIR" ] && usage "missing \e[91m'--dir'\e[39m option"
+[ -z "$SSHUSER" ] && usage "missing \e[91m'--user'\e[39m option"
+
+#[ -z "$VM" ] && echo -e "missing \e[91m'--vm'\e[39m option"
+#[ -z "$HOST" ] && echo -e "missing \e[91m'--host'\e[39m option"
+#[ -z "$DIR" ] && echo -e "missing \e[91m'--dir'\e[39m option"
+#[ -z "$SSHUSER" ] && echo -e "missing \e[91m'--user'\e[39m option"
 
 main
