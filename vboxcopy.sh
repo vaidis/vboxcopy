@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#IFS=""
 IFS="
 "
 LOG="vboxcopy.log"
@@ -22,16 +23,18 @@ function usage() {
 
 function list () {
     total=0
+    count=0
     for vm in $(vboxmanage list vms); do
          vm_name="$(echo $vm | awk -F\{ '{print $1}' | sed 's/[[:space:]]*$//' | sed 's/\"//g' )"
          vm_log=$(vboxmanage showvminfo "$vm_name" | grep "Log folder" | awk -F: '{print $2}' | sed 's/^[ ]*//g')
          vm_dir=$(dirname "$vm_log")
          vm_size_h=$(du -sh "$vm_dir" | awk '{print $1}')
          vm_size_b=$(du -s "$vm_dir" | awk '{print $1}')
-         echo -e "\e[96m $vm_size_h \e[39m " "$vm_name"
+         echo -e "\e[94m $vm_size_h \e[39m " "$vm_name"
          total=$((total+vm_size_b))
+         count=$((count+1))
     done
-    echo -e "\e[96m $((total / 1024 / 1024))G\e[39m \e[101m TOTAL \e[49m"
+    echo -e "\e[44m $((total / 1024 / 1024))G\e[39m \e[101m TOTAL  ($count)\e[49m"
 }
 
 
