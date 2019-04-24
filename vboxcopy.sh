@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#IFS=""
 IFS="
 "
 LOG="vboxcopy.log"
@@ -16,7 +15,7 @@ function usage() {
     echo -e "\n $1\n"
     echo -e "./vboxcopy.sh \e[93m--help \e[39m "
     echo -e "./vboxcopy.sh \e[93m--list \e[39m "
-    echo -e "./vboxcopy.sh --vm=\e[96m'IT development sql'\e[39m --dest=\e[91m10.20.30.40\e[39m --user=\e[91mroot\e[39m"
+    echo -e "./vboxcopy.sh --vm=\e[96m'IT development sql'\e[39m --dest=\e[91m10.20.30.40\e[39m --user=\e[91mroot\e[39m --dir=\e[91m/vmachines\e[39m "
     echo
     exit
 }
@@ -213,10 +212,5 @@ done
 [ -z "$HOST" ] && usage "missing \e[91m'--host'\e[39m option"
 [ -z "$DIR" ] && usage "missing \e[91m'--dir'\e[39m option"
 [ -z "$SSHUSER" ] && usage "missing \e[91m'--user'\e[39m option"
-
-#[ -z "$VM" ] && echo -e "missing \e[91m'--vm'\e[39m option"
-#[ -z "$HOST" ] && echo -e "missing \e[91m'--host'\e[39m option"
-#[ -z "$DIR" ] && echo -e "missing \e[91m'--dir'\e[39m option"
-#[ -z "$SSHUSER" ] && echo -e "missing \e[91m'--user'\e[39m option"
 
 main
