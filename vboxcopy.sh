@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#IFS=""
 IFS="
 "
 LOG="vboxcopy.log"
